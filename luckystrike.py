@@ -2,6 +2,7 @@ import urwid
 import random
 import csv
 import logging
+import os
 
 
 class LuckyDrawController(object):
@@ -11,7 +12,7 @@ class LuckyDrawController(object):
         self.padding = urwid.Padding(self.text, 'center', width='clip')
         self.fill = urwid.Filler(self.padding)
         self.count = 0
-        self.footer = urwid.Text("Press enter to save and choose new winner, press ESC to choose a new one without saving")
+        self.footer = urwid.Text("Press enter to save and choose new winner, press ESC to choose a new one without saving, press s to save and quit")
         self.ftr = urwid.AttrWrap(self.footer, "footer")
         self.frame = urwid.Frame(footer=self.ftr, body=self.fill)
 
@@ -23,11 +24,12 @@ class LuckyDrawController(object):
         self.selected = set()
         self.winner = ""
         self.winner_email = ""
-        f = open("result.csv","rb")
-        result_file = csv.reader(f)
-        for entry in result_file:
-            self.selected.add((entry[0], entry[1]))
-        f.close()
+        if os.path.isfile("result.csv"):
+            f = open("result.csv","rb")
+            result_file = csv.reader(f)
+            for entry in result_file:
+                self.selected.add((entry[0], entry[1]))
+            f.close()
         self.result_file = csv.writer(open("result.csv", "ab"))
         self.update_interval = 0.1  
 
@@ -50,6 +52,10 @@ class LuckyDrawController(object):
 
     def q_to_exit(self, key):
         if key in ('q', 'Q'):
+            raise urwid.ExitMainLoop()
+        if key in ('s', 'S'):
+            if self.winner:
+                self.result_file.writerow([self.winner, self.winner_email])
             raise urwid.ExitMainLoop()
         if key == 'enter':
             self.count = 0
